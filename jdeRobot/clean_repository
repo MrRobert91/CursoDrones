@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# Authors:
+#   mikel, rocapal, mmoya(mikel), varhub
+# Signed by:
+#   varhub, fqez (2015.12.01)
+
+delete=-delete
+[ "$1" = "--dry-run" ] && delete='-print'
+[ "$1" = "--verbose" ] && delete="-print $delete"
+
+# Execution is only allowed from root directory
+test -d src
+if [ $? -ne 0 ]
+then
+    echo 'Execution is only allowed from root directory'>&2
+    exit 1
+fi
+
+# halt on fail
+set -e
+
+## Remove CMake generated files
+# remove cmake_(un)?install.cmake files
+find -type f -name cmake_install.cmake $delete
+find -type f -name cmake_uninstall.cmake $delete
+
+# remove whole CMake build directories (a.k.a CMakeFiles subtree)
+find . -type d -name CMakeFiles $delete -o -path '*/CMakeFiles/*' $delete
+
+# remove Makefile files
+# whitelist!
+find . -type f -name Makefile ! -path '*/doc/paper-autonomous_robots/Makefile' $delete
+find . -type f -name 'Makefile-*' $delete
+
+# remove CMakeCache.txt files
+find -type f -name CMakeCache.txt $delete
+
+## remove generated interface source files
+# whitelist approach
+find src/interfaces/ ! -name '*.ice' ! -name 'CMakeLists.txt' ! -name '.keepme' -type f $delete
+
+## remove generated libraries (*.so and *.a files)
+find -type f -name '*\.so' $delete
+find -type f -name '*\.so\.*' $delete
+find -type f -name '*\.a' $delete
